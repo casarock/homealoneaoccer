@@ -1,19 +1,22 @@
 game.module(
-	'game.main'
+    'game.main'
 ).require(
-	'game.assets',
-	'game.objects'
+    'game.assets',
+    'game.objects'
 ).body(function() {
 
-	game.createScene('Main', {
-		init: function() {
-			this.world = new game.World(0, 0);
-			this.player = new game.Player(20, 20);
-		},
+    game.createScene('Main', {
+        gravity: 1000,
 
-		mousedown: function() {
-			this.player.jump();
-		}
-	});
+        init: function() {
+            this.world = new game.World(0, this.gravity);
+            this.player = new game.Player(200, 200);
+
+        },
+
+        mousedown: function() {
+            this.player.jump();
+        }
+    });
 
 });
