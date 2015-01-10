@@ -12,8 +12,8 @@ game.module(
 		init: function(x, y) {
 			this._super('player_sprite.png', x, y, {
 				anchor: {
-					x: 0,
-					y: 0
+					x: 0.5,
+					y: 0.5
 				}
 			});
 
@@ -40,7 +40,7 @@ game.module(
 				mass: 1
 			});
 
-			this.body.addShape(new game.Rectangle(20, 72));
+			this.body.addShape(new game.Rectangle(16, 72));
 
 			game.scene.world.addBody(this.body);
 			game.scene.stage.addChild(this);
@@ -60,8 +60,29 @@ game.module(
 		jump: function() {
 			if (this.body.position.y < 200) return;
 			this.body.velocity.y = -this.jumpPower;
-			console.log("Jump");
 		}
+	});
+
+	game.createClass('Ball', 'Sprite',  {
+		active: true,
+
+		init: function(x, y) {
+			this._super('ball_16.png', x, y, {
+				anchor: {
+					x: 0.5,
+					y: 0.5
+				}
+			});
+
+			this.position = {
+				x: x,
+				y: y
+			};
+
+			game.scene.stage.addChild(this);
+			game.scene.addObject(this);
+		}
+
 	});
 
 });
