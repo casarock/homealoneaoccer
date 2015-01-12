@@ -5,6 +5,8 @@ game.module(
 	game.addAsset('player_sprite.png');
 	game.addAsset('ball_16_2.png');
 	game.addAsset('particle.png');
+	game.addAsset('wall.png');
+	game.addAsset('ground.png');
 	// game.addAudio('audio/music.m4a', 'music');
 
 });
