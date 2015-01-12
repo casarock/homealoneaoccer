@@ -6,12 +6,12 @@ game.module(
 ).body(function() {
 
 	game.createScene('Main', {
-		gravity: 1000,
+		gravity: 1200,
 		backgroundColor: 0x005500,
 
 		init: function() {
 			this.world = new game.World(0, this.gravity);
-			this.player = new game.Player(100, game.system.height - 36);
+			this.player = new game.Player(50, game.system.height - 36);
 			this.ball = new game.Ball(232, 200);
 		},
 
