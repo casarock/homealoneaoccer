@@ -6,6 +6,8 @@ game.module(
 
 	game.createClass('Player', 'Sprite', {
 		jumpPower: 750,
+		totalJumps: 2,
+		jumps: 2,
 		playerGround: 0,
 
 		init: function(x, y) {
@@ -55,11 +57,23 @@ game.module(
 			this.position.x = this.body.position.x;
 			this.position.y = this.body.position.y;
 
+
+			if (this.body.position.y >= this.playerGround) {
+				this.jumps = this.totalJumps;
+			}
+
 		},
 
 		jump: function() {
-			if (this.body.position.y < this.playerGround) return;
-			this.body.velocity.y = -this.jumpPower;
+			if (this.body.position.y < this.playerGround && this.jumps <= 0) {
+				return;
+			}
+
+			if (this.jumps > 0) {
+				this.body.velocity.y = -this.jumpPower;
+				this.jumps--;
+			}
+
 		}
 	});
 
