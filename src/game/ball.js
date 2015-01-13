@@ -140,13 +140,23 @@ game.module(
 			game.scene.world.removeBody(this.body);
 			game.scene.removeObject(this);
 			game.scene.stage.removeChild(this);
-			console.log("cleanup");
 		},
 
 		reset: function() {
-			this.body.position.x = 320-17;
+			this.body.position.x = 320 - 17;
 			this.body.position.y = this.getRandomStartPosition();
+		},
+
+		bulletTime: function(set) {
+			set = set || false;
+
+			this.body.mass = set ? this.body.mass / 4 : this.body.mass * 4;
+			this.body.velocity.x = set ? this.body.velocity.x / 2 : this.body.velocity.x * 2;
+			this.randomVelocityYMin = set ? this.randomVelocityYMin / 2 : this.randomVelocityYMin * 2;
+			this.randomVelocityYMax = set ? this.randomVelocityYMax / 2 : this.randomVelocityYMax * 2;
 		}
+
+
 
 	});
 });

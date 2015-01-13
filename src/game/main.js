@@ -13,9 +13,18 @@ game.module(
 		gameRuns: false,
 		score: 0,
 		scoreText: null,
+		bulletTimeActive: 0,
 
 		init: function() {
 			this.world = new game.World(0, this.gravity);
+
+			var background = new game.Sprite('city_bg.png').addTo(this.stage);
+			background.position = {
+				x: 0,
+				y: 220
+			};
+			background.alpha = 0.75
+
 			this.wall = new game.Wall(game.system.width - 17, game.system.height - 256 - 64);
 			this.ground = new game.Ground(0, game.system.height - 64);
 			this.player = new game.Player(50, game.system.height - 36);
@@ -31,6 +40,8 @@ game.module(
 				this.player.jump();
 			} else {
 				this.ball = new game.Ball(20, 200);
+				this.score = -1;
+				this.addScore();
 				this.gameRuns = true;
 			}
 		},
@@ -38,7 +49,6 @@ game.module(
 		addScore: function() {
 			this.score++;
 
-			console.log(this.score);
 			this.scoreText.setText("Score:" + this.pad(this.score, 3, 0));
 			this.scoreText.updateTransform();
 			this.scoreText.position.x = 10;
