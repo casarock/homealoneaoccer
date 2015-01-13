@@ -36,11 +36,11 @@ game.module(
 					x: 0,
 					y: 0
 				},
-				collisionGroup: 0,
+				collisionGroup: 2,
 				mass: 1.2
 			});
 
-			this.body.addShape(new game.Rectangle(16, 72));
+			this.body.addShape(new game.Rectangle(5, 68));
 
 			game.scene.world.addBody(this.body);
 			game.scene.stage.addChild(this);
@@ -54,7 +54,7 @@ game.module(
 				this.body.velocity.y = 0;
 				this.body.position.y = this.playerGround;
 			}
-			this.position.x = this.body.position.x;
+			this.position.x = this.body.position.x - 5;
 			this.position.y = this.body.position.y;
 
 

@@ -14,6 +14,7 @@ game.module(
 		startY: 200,
 		startYMax: 200 + 50,
 		startX: 232,
+		scoreCache: 0,
 
 		init: function(x, y) {
 			this.ground = game.system.height - 80;
@@ -44,7 +45,7 @@ game.module(
 					y: 0
 				},
 				collisionGroup: 1,
-				collideAgainst: [0],
+				collideAgainst: [0, 2],
 				mass: 1.3
 			});
 
@@ -57,6 +58,8 @@ game.module(
 				life: 250,
 				textures: ['particle.png']
 			});
+
+			this.smokeEmitter.position.set(-100, -100);
 
 			this.body.addShape(new game.Rectangle(15, 15));
 			this.body.collide = this.collide.bind(this);
@@ -74,12 +77,16 @@ game.module(
 			this.randomVelocityY = this.getRandomVelocityY();
 			this.body.velocity.x *= -1;
 			this.emmitParticles(16, 8);
+
+			if (opponent.collisionGroup === 2) {
+				game.scene.addScore();
+			}
 		},
 
 		update: function() {
 			var rotationFactor = this.body.velocity.x > 0 ? 1 : -1,
 			outOfBounds =  this.body.position.x > game.system.width - 8
-						|| this.body.position.x < 8;
+						|| this.body.position.x < -32;
 
 			if (outOfBounds) {
 				if (this.body.position.x > game.system.width - 8) {
@@ -88,7 +95,8 @@ game.module(
 					this.randomVelocityY = this.getRandomVelocityY();
 					this.emmitParticles(16, 8);
 				} else {
-					this.reset();
+					this.remove();
+					game.scene.gameRuns = false;
 				}
 			}
 
@@ -126,6 +134,13 @@ game.module(
 			);
 
 			return value;
+		},
+
+		remove: function() {
+			game.scene.world.removeBody(this.body);
+			game.scene.removeObject(this);
+			game.scene.stage.removeChild(this);
+			console.log("cleanup");
 		},
 
 		reset: function() {
