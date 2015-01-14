@@ -146,6 +146,29 @@ game.module(
 			resultText.position.y = game.system.height / 2 - resultText.height / 2;
 			resultText.addTo(this.stage);
 
+			var tween = new game.Tween(resultText);
+			tween.to({rotation:2*Math.PI}, 1500);
+			tween.easing(game.Tween.Easing.Elastic.Out);
+			tween.start();
+
+			if (high) {
+				var smokeEmitter = new game.Emitter({
+					rotate: 0,
+					endAlpha: 0,
+					count: 64,
+					rate: 0.5,
+					duration: 500,
+					life: 1000,
+					textures: ['particle.png']
+				});
+				smokeEmitter.position = {
+					x: game.system.width/2,
+					y: game.system.height/2
+				};
+				smokeEmitter.positionVar.set(100, 100);
+				smokeEmitter.addTo(game.scene.stage);
+				game.scene.addEmitter(smokeEmitter);
+			}
 		},
 
 		setBackground: function() {
