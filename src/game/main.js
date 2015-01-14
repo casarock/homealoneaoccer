@@ -177,7 +177,7 @@ game.module(
 				x: 0,
 				y: 220
 			};
-			background.alpha = 0.75
+			background.alpha = 0.5
 		},
 
 		pad: function(n, width, z) {

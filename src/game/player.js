@@ -11,7 +11,7 @@ game.module(
 		playerGround: 0,
 
 		init: function(x, y) {
-			this._super('player_sprite.png', x, y, {
+			this._super('player_sprite_2.png', x, y, {
 				anchor: {
 					x: 0.5,
 					y: 0.5
@@ -54,7 +54,7 @@ game.module(
 				this.body.velocity.y = 0;
 				this.body.position.y = this.playerGround;
 			}
-			this.position.x = this.body.position.x - 5;
+			this.position.x = this.body.position.x - 3;
 			this.position.y = this.body.position.y;
 
 
