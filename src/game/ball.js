@@ -97,6 +97,7 @@ game.module(
 				} else {
 					this.remove();
 					game.scene.gameRuns = false;
+					game.scene.gameOver();
 				}
 			}
 

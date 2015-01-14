@@ -6,5 +6,8 @@ pandaConfig = {
         width: 320,
         height: 480,
         scaleToFit: false
+    },
+    storage: {
+        id: 'de.appsbude.homealonesoccer'
     }
 };
