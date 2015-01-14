@@ -3,6 +3,7 @@ game.module(
 ).body(function() {
 
 	game.addAsset('player_sprite.png');
+	game.addAsset('gameover.png');
 	game.addAsset('ball_16_2.png');
 	game.addAsset('particle.png');
 	game.addAsset('wall.png');

@@ -96,7 +96,7 @@ game.module(
 					this.emmitParticles(16, 8);
 				} else {
 					this.remove();
-					game.scene.gameRuns = false;
+					game.scene.states.gameRuns = false;
 					game.scene.gameOver();
 				}
 			}

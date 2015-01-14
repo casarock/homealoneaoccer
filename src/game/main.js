@@ -8,13 +8,38 @@ game.module(
 ).body(function() {
 
 	game.createScene('Main', {
+		backgroundColor: 0x33aa66,
+
+		init: function() {
+			var text = new game.BitmapText("Home alone Soccer", {font: 'font', align: 'left'});
+			text.position = {
+				x: game.system.width / 2 - text.width / 2,
+				y: game.system.height /2 - text.height /2
+			};
+			this.stage.addChild(text);
+		},
+
+		mousedown: function() {
+			game.system.setScene('Game');
+		}
+	});
+
+	game.createScene('Game', {
 		gravity: 1200,
 		backgroundColor: 0x47c7ea,
-		gameRuns: false,
 		score: 0,
 		scoreText: null,
 		bulletTimeActive: 0,
 		highscore: 0,
+		states: {
+			gameRuns: false,
+			gameOver: false
+		},
+		resultTexts: {
+			fail: "Try harder!",
+			n00b: "ROFL!",
+			highscore: "New Highscore!"
+		},
 
 		init: function() {
 			this.world = new game.World(0, this.gravity);
@@ -36,16 +61,24 @@ game.module(
 			this.scoreText.position.y = 10;
 			this.scoreText.addTo(this.stage);
 
+			this.getReady();
 		},
 
 		mousedown: function() {
-			if (this.gameRuns) {
+			if (this.states.gameRuns) {
 				this.player.jump();
+			} else if(this.states.gameOver) {
+				// click leads to intro scene!
+				game.system.setScene('Main');
 			} else {
+				game.scene.removeObject(this.getReadyText);
+				game.scene.stage.removeChild(this.getReadyText);
+
 				this.ball = new game.Ball(20, 200);
 				this.score = -1;
 				this.addScore();
-				this.gameRuns = true;
+				this.states.gameRuns = true;
+				this.states.gameOver = false;
 			}
 		},
 
@@ -59,14 +92,60 @@ game.module(
 
 		gameOver: function() {
 			// save highscore.
+			this.states.gameOver = true;
+			var newHigh = false;
 			if (this.score > this.highscore) {
 				game.storage.set('highscore', this.score);
 				this.highscore = this.score;
 				this.highscoreText.setText("Best:"+ this.pad(this.highscore, 3, 0));
 				this.highscoreText.updateTransform();
+				newHigh = true;
 			}
 
-			// other stuff...
+			// show results..
+			this.showResultsBox(newHigh);
+		},
+
+		getReady: function() {
+			this.getReadyText = new game.BitmapText("Get Ready...", {font: 'font', align: 'left'});
+			this.getReadyText.position.x = -(game.system.width + 10);
+			this.getReadyText.position.y = game.system.height / 2 - this.getReadyText.height / 2;
+			this.getReadyText.addTo(this.stage);
+
+			var tween = new game.Tween(this.getReadyText.position);
+			tween.to({x:(game.system.width / 2 - this.getReadyText.width / 2)}, 1500);
+			tween.easing(game.Tween.Easing.Elastic.Out);
+			tween.start();
+		},
+
+		showResultsBox: function(high) {
+			var gameOverBox = new game.Sprite('gameover.png');
+			var text = "";
+
+			if (this.score === 0) {
+				text = this.resultTexts.n00b;
+			} else if (high) {
+				text = this.resultTexts.highscore;
+			} else {
+				text = this.resultTexts.fail;
+			}
+
+			gameOverBox.addTo(this.stage);
+			gameOverBox.anchor = {
+				x: 0.5,
+				y: 0.5
+			};
+
+			gameOverBox.position = {
+				x: game.system.width / 2,
+				y: game.system.height / 2
+			};
+
+			var resultText = new game.BitmapText(text, {font: 'font', align: 'left'});
+			resultText.position.x = game.system.width / 2 - resultText.width / 2;
+			resultText.position.y = game.system.height / 2 - resultText.height / 2;
+			resultText.addTo(this.stage);
+
 		},
 
 		setBackground: function() {
