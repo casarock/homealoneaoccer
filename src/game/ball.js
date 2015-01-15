@@ -54,6 +54,7 @@ game.module(
 			this.smokeEmitter = new game.Emitter({
 				rotate: 0,
 				endAlpha: 0,
+				angleVar: Math.PI,
 				count: 32,
 				rate: 0.5,
 				duration: 500,
@@ -78,7 +79,7 @@ game.module(
 		collide: function(opponent) {
 			// debounce collision!
 			if (game.system.timer.last - this.lastCollideTimer < this.collisionTimer) {
-				return;
+				return true;
 			}
 
 			this.lastCollideTimer = game.system.timer.last;
