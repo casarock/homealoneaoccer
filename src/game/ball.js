@@ -15,6 +15,8 @@ game.module(
 		startYMax: 200 + 50,
 		startX: 232,
 		scoreCache: 0,
+		lastCollideTimer: 0,
+		collisionTimer: 100,
 
 		init: function(x, y) {
 			this.ground = game.system.height - 80;
@@ -74,13 +76,22 @@ game.module(
 		},
 
 		collide: function(opponent) {
+			// debounce collision!
+			if (game.system.timer.last - this.lastCollideTimer < this.collisionTimer) {
+				return;
+			}
+
+			this.lastCollideTimer = game.system.timer.last;
 			this.randomVelocityY = this.getRandomVelocityY();
 			this.body.velocity.x *= -1;
+
 			this.emmitParticles(16, 8);
 
 			if (opponent.collisionGroup === 2) {
 				game.scene.addScore();
 			}
+
+			return true;
 		},
 
 		update: function() {

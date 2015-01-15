@@ -1,5 +1,4 @@
 // Panda.js HTML5 game engine
-
 // created by Eemeli Kelokorpi
 
 'use strict';
@@ -15,7 +14,7 @@ var game = {
     /**
         @property {String} version
     **/
-    version: '1.11.0',
+    version: '1.12.0',
     /**
         @property {Object} config
     **/
@@ -79,7 +78,7 @@ var game = {
     **/
     keyboard: null,
     /**
-        Device / browser detection.
+        Device / browser information.
         @property {Object} device
     **/
     device: {},
@@ -87,16 +86,15 @@ var game = {
     plugins: {},
     json: {},
     modules: {},
-    renderer: null,
     nocache: '',
-    current: null,
     waitForLoad: 0,
     DOMLoaded: false,
-    next: 1,
-    anims: {},
+    gameLoopId: 1,
+    gameLoops: {},
     moduleQueue: [],
     assetQueue: [],
     audioQueue: [],
+    gameMainModule: 'game.main',
 
     /**
         Get JSON data.
@@ -138,6 +136,12 @@ var game = {
         }
     },
 
+    /**
+        Merge objects.
+        @method merge
+        @param {Object} to
+        @param {Object} from
+    **/
     merge: function(to, from) {
         for (var key in from) {
             var ext = from[key];
@@ -159,6 +163,12 @@ var game = {
         return to;
     },
 
+    /**
+        Sort object by key names.
+        @method ksort
+        @param {Object} obj
+        @param {Function} [compare]
+    **/
     ksort: function(obj, compare) {
         if (!obj || typeof obj !== 'object') return false;
 
@@ -186,8 +196,8 @@ var game = {
     },
 
     normalizeVendorAttribute: function(el, attr) {
-        var prefixedVal = this.getVendorAttribute(el, attr);
         if (el[attr]) return;
+        var prefixedVal = this.getVendorAttribute(el, attr);
         el[attr] = el[attr] || prefixedVal;
     },
 
@@ -197,7 +207,7 @@ var game = {
     **/
     fullscreen: function() {
         if (this.system.canvas.requestFullscreen) this.system.canvas.requestFullscreen();
-        if (this.system.canvas.requestFullScreen) this.system.canvas.requestFullScreen();
+        else if (this.system.canvas.requestFullScreen) this.system.canvas.requestFullScreen();
     },
 
     /**
@@ -300,11 +310,14 @@ var game = {
         if (this.modules[name] && this.modules[name].body) throw 'module ' + name + ' is already defined';
 
         this.current = { name: name, requires: [], loaded: false, body: null };
-        if (name === 'game.main') this.current.requires.push('engine.core');
+        if (name === this.gameMainModule) {
+            this.current.requires.push('engine.core');
+            if (this.DOMLoaded) this.loadModules();
+        }
         this.modules[name] = this.current;
         this.moduleQueue.push(this.current);
 
-        if (this.current.name === 'engine.core') {
+        if (name === 'engine.core') {
             if (this.config.ignoreModules) {
                 for (var i = this.coreModules.length - 1; i >= 0; i--) {
                     if (this.config.ignoreModules.indexOf(this.coreModules[i]) !== -1) this.coreModules.splice(i, 1);
@@ -340,20 +353,16 @@ var game = {
         if (this.loadFinished) this.loadModules();
     },
 
-    /**
-        Start the game engine.
-        @method start
-    **/
-    start: function(scene, width, height) {
+    start: function() {
         if (this.moduleQueue.length > 0) return;
 
-        this.system = new this.System(width, height);
+        this.system = new this.System();
 
         if (this.Audio) this.audio = new this.Audio();
         if (this.Pool) this.pool = new this.Pool();
         if (this.DebugDraw && this.DebugDraw.enabled) this.debugDraw = new this.DebugDraw();
-        if (this.Storage && this.Storage.id) this.storage = new this.Storage(this.Storage.id);
-        if (this.Analytics && this.Analytics.id) this.analytics = new this.Analytics(this.Analytics.id);
+        if (this.Storage && this.Storage.id) this.storage = new this.Storage();
+        if (this.Analytics && this.Analytics.id) this.analytics = new this.Analytics();
         if (this.TweenEngine) this.tweenEngine = new this.TweenEngine();
 
         // Load plugins
@@ -361,7 +370,7 @@ var game = {
             this.plugins[name] = new (this.plugins[name])();
         }
 
-        this.loader = new (this.Loader)(scene);
+        this.loader = new this.Loader();
         if (!this.system.rotateScreenVisible) this.loader.start();
 
         this.onStart();
@@ -380,15 +389,16 @@ var game = {
         var script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = path;
-        var me = this;
-        script.onload = function() {
-            me.waitForLoad--;
-            me.loadModules();
-        };
+        script.onload = this.scriptLoaded.bind(this);
         script.onerror = function() {
             throw 'to load module ' + name + ' at ' + path + ' required from ' + requiredFrom;
         };
         document.getElementsByTagName('head')[0].appendChild(script);
+    },
+
+    scriptLoaded: function() {
+        this.waitForLoad--;
+        this.loadModules();
     },
 
     loadModules: function() {
@@ -410,22 +420,11 @@ var game = {
 
             if (dependenciesLoaded && module.body) {
                 this.moduleQueue.splice(i, 1);
-                if (this.moduleQueue.length === 0) {
-                    // Last module loaded, parse config
-                    for (var c in this.config) {
-                        var m = c.ucfirst();
-                        if (this[m]) {
-                            for (var o in this.config[c]) {
-                                this[m][o] = this.config[c][o];
-                            }
-                        }
-                    }
-                }
                 module.loaded = true;
-                module.body(this);
+                module.body();
                 moduleLoaded = true;
                 i--;
-                if (this.moduleQueue.length === 0 && this.config.autoStart !== false && !this.system) this.start();
+                if (this.moduleQueue.length === 0) this.modulesLoaded();
             }
         }
 
@@ -452,19 +451,37 @@ var game = {
         }
     },
 
-    setGameLoop: function(callback, element) {
-        if (window.requestAnimationFrame) {
-            var current = this.next++;
-            this.anims[current] = true;
+    modulesLoaded: function() {
+        // Parse config
+        for (var c in this.config) {
+            var m = c.ucfirst();
+            if (this[m]) {
+                for (var o in this.config[c]) {
+                    this[m][o] = this.config[c][o];
+                }
+            }
+        }
 
-            var me = this;
+        if (this.config.autoStart !== false && !this.system) this.start();
+        else this.ready();
+    },
+
+    ready: function() {
+    },
+
+    setGameLoop: function(callback, element) {
+        if (game.System.frameRate) return window.setInterval(callback, 1000 / game.System.frameRate);
+        if (window.requestAnimationFrame) {
+            var id = this.gameLoopId++;
+            this.gameLoops[id] = true;
+
             var animate = function() {
-                if (!me.anims[current]) return;
+                if (!game.gameLoops[id]) return;
                 window.requestAnimationFrame(animate, element);
                 callback();
             };
             window.requestAnimationFrame(animate, element);
-            return current;
+            return id;
         }
         else {
             return window.setInterval(callback, 1000 / 60);
@@ -472,19 +489,17 @@ var game = {
     },
 
     clearGameLoop: function(id) {
-        if (window.requestAnimationFrame) {
-            delete this.anims[id];
-        }
-        else {
-            window.clearInterval(id);
-        }
+        if (this.gameLoops[id]) delete this.gameLoops[id];
+        else window.clearInterval(id);
     },
 
     boot: function() {
-        if (game.config.noCanvasURL) {
+        delete window.pandaConfig;
+
+        if (this.config.noCanvasURL) {
             var canvas = document.createElement('canvas');
             var canvasSupported = !!(canvas.getContext && canvas.getContext('2d'));
-            if (!canvasSupported) window.location = game.config.noCanvasURL;
+            if (!canvasSupported) window.location = this.config.noCanvasURL;
         }
 
         Math.distance = function(x, y, x2, y2) {
@@ -503,7 +518,7 @@ var game = {
             var i = this;
             if (i < min) i = min;
             if (i > max) i = max;
-            return parseFloat(i);
+            return i;
         };
 
         Number.prototype.round = function(precision) {
@@ -514,7 +529,10 @@ var game = {
 
         Array.prototype.erase = function(item) {
             for (var i = this.length; i >= 0; i--) {
-                if (this[i] === item) this.splice(i, 1);
+                if (this[i] === item) {
+                    this.splice(i, 1);
+                    return this;
+                }
             }
             return this;
         };
@@ -533,7 +551,6 @@ var game = {
                 this[i] = this[p];
                 this[p] = t;
             }
-
             return this;
         };
 
@@ -557,7 +574,7 @@ var game = {
 
         this.module('engine.core');
 
-        game.normalizeVendorAttribute(window, 'requestAnimationFrame');
+        this.normalizeVendorAttribute(window, 'requestAnimationFrame');
 
         this.device.pixelRatio = window.devicePixelRatio || 1;
         this.device.screen = {
@@ -675,10 +692,17 @@ var game = {
         if (!this.DOMLoaded) {
             if (!document.body) return setTimeout(this.DOMReady.bind(this), 13);
             this.DOMLoaded = true;
-            this.loadModules();
+            if (this.modules[this.gameMainModule]) this.loadModules();
         }
     },
 
+    /**
+        Create new class.
+        @method createClass
+        @param {String} name
+        @param {String} [extend]
+        @param {Object} content
+    **/
     createClass: function(name, extend, content) {
         if (game[name]) throw 'class ' + name + ' already created';
 
@@ -690,10 +714,22 @@ var game = {
         return game[name] = game[extend].extend(content);
     },
 
+    /**
+        Create new scene.
+        @method createScene
+        @param {String} name
+        @param {Object} content
+    **/
     createScene: function(name, content) {
         return this.createClass('Scene' + name, 'Scene', content);
     },
 
+    /**
+        Add attributes to class.
+        @method addAttributes
+        @param {String} className
+        @param {Object} attributes
+    **/
     addAttributes: function(className, attributes) {
         if (!this[className]) throw 'class ' + className + ' not found';
 
